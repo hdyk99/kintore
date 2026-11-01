@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="筋トレ">
+<meta name="theme-color" content="#0f1115">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>筋トレ記録</title>
+<style>
+:root {
+  --bg: #0f1115;
+  --surface: #1a1d24;
+  --surface2: #252933;
+  --line: #2f3441;
+  --text: #f2f3f5;
+  --text2: #a9afba;
+  --muted: #747b88;
+  --accent: #a3e635;
+  --accent-ink: #142006;
+  --accent-soft: rgba(163, 230, 53, .14);
+  --danger: #ff6464;
+  --radius: 14px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  font-size: 16px; line-height: 1.5;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  -webkit-text-size-adjust: 100%;
+}
+button, input, select { font: inherit; color: inherit; }
+button { touch-action: manipulation; cursor: pointer; }
+
+header {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(15, 17, 21, .92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  border-bottom: 1px solid var(--line);
+}
+header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+main { padding: 16px; max-width: 560px; margin: 0 auto; }
+
+nav#tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: rgba(20, 22, 28, .96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav#tabs button {
+  background: none; border: 0; padding: 8px 0 10px; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px;
+}
+nav#tabs button svg { width: 24px; height: 24px; }
+nav#tabs button.on { color: var(--accent); }
+
+.card { background: var(--surface); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.tag {
+  display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 6px;
+  background: var(--surface2); color: var(--text2); margin-right: 6px; vertical-align: 2px;
+}
+.btn {
+  display: block; width: 100%; border: 0; border-radius: 12px; padding: 13px;
+  background: var(--surface2); font-weight: 600;
+}
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: none; border: 1.5px dashed var(--line); color: var(--text2); }
+.btn.danger { color: var(--danger); }
+.row { display: flex; gap: 8px; align-items: center; }
+.grow { flex: 1; min-width: 0; }
+.icon-btn {
+  background: none; border: 0; color: var(--muted); width: 36px; height: 36px;
+  display: grid; place-items: center; border-radius: 10px; font-size: 18px; flex: none;
+}
+.empty { text-align: center; color: var(--muted); padding: 40px 0; }
+
+/* 記録 */
+.datebar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.datebar .d { flex: 1; text-align: center; font-weight: 700; font-size: 17px; }
+.datebar .d small { display: block; font-weight: 400; font-size: 12px; color: var(--accent); min-height: 18px; }
+.datebar .icon-btn { background: var(--surface); color: var(--text); font-size: 22px; width: 44px; height: 44px; }
+.ex-head { display: flex; align-items: center; gap: 8px; }
+.ex-head .name { font-weight: 700; font-size: 17px; flex: 1; min-width: 0; }
+.prev { font-size: 13px; color: var(--muted); margin: 2px 0 8px; }
+.sets { list-style: none; margin: 0 0 10px; padding: 0; }
+.sets li {
+  display: flex; align-items: center; gap: 10px; padding: 4px 4px 4px 8px; border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.sets li + li { margin-top: 2px; }
+.sets li.editing { background: var(--accent-soft); }
+.sets .no {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--surface2);
+  display: grid; place-items: center; font-size: 12px; color: var(--text2); flex: none;
+}
+.sets .v { flex: 1; }
+.steppers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.stepper label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.stepper .ctl { display: flex; background: var(--surface2); border-radius: 12px; overflow: hidden; }
+.stepper button { width: 44px; height: 48px; border: 0; background: none; font-size: 22px; color: var(--accent); flex: none; }
+.stepper button:active { background: var(--line); }
+.stepper input {
+  flex: 1; min-width: 0; width: 100%; border: 0; background: none; text-align: center;
+  font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; outline: none;
+}
+.edit-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+
+/* シート */
+#sheet { position: fixed; inset: 0; z-index: 50; display: none; }
+#sheet.open { display: block; }
+#sheet .backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .55); }
+#sheet .panel {
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: 86vh; overflow-y: auto;
+  background: var(--bg); border-radius: 20px 20px 0 0; padding: 8px 16px calc(20px + env(safe-area-inset-bottom));
+  max-width: 560px; margin: 0 auto;
+}
+#sheet .grip { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 12px; }
+.seg { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; scrollbar-width: none; }
+.seg::-webkit-scrollbar { display: none; }
+.seg button {
+  flex: none; border: 0; border-radius: 999px; padding: 7px 14px; background: var(--surface); color: var(--text2); font-size: 14px;
+}
+.seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.pick-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.pick-list button {
+  display: flex; align-items: center; gap: 8px; text-align: left; border: 0; background: var(--surface);
+  border-radius: 12px; padding: 13px 14px;
+}
+.pick-list button .grow small { display: block; color: var(--muted); font-size: 12px; }
+.pick-list button .chk { color: var(--accent); font-weight: 700; }
+
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.field input[type=text], .field select, select.full {
+  width: 100%; background: var(--surface2); border: 0; border-radius: 10px; padding: 11px 12px; font-size: 16px;
+  -webkit-appearance: none; appearance: none;
+}
+.check { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 15px; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+/* グラフ */
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.tile { background: var(--surface); border-radius: 12px; padding: 10px 12px; }
+.tile .k { font-size: 12px; color: var(--text2); }
+.tile .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile .v small { font-size: 12px; font-weight: 400; color: var(--text2); margin-left: 2px; }
+.chart-wrap { position: relative; }
+.chart-wrap svg { display: block; width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.tip {
+  position: absolute; top: 0; pointer-events: none; background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 6px 10px; font-size: 12px; white-space: nowrap; display: none;
+  font-variant-numeric: tabular-nums; box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+}
+.tip b { font-size: 15px; }
+.hist { list-style: none; padding: 0; margin: 0; }
+.hist li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.hist li:first-child { border-top: 0; }
+.hist .dt { width: 64px; flex: none; color: var(--text2); }
+.hist .best { width: 70px; flex: none; font-weight: 700; text-align: right; }
+
+/* カレンダー */
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-head .m { font-weight: 700; font-size: 17px; }
+.cal-head .icon-btn { background: var(--surface); color: var(--text); font-size: 22px; width: 44px; height: 44px; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.cal .wd { font-size: 12px; color: var(--muted); padding: 4px 0; }
+.cal .wd.sun { color: #ff8f8f; }
+.cal .wd.sat { color: #8fb8ff; }
+.cal button {
+  aspect-ratio: 1; border: 0; border-radius: 10px; background: none; font-size: 15px; position: relative;
+  font-variant-numeric: tabular-nums; padding: 0;
+}
+.cal button.has { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.cal button.has::after {
+  content: ""; position: absolute; left: 50%; bottom: 6px; width: 5px; height: 5px; margin-left: -2.5px;
+  border-radius: 50%; background: var(--accent);
+}
+.cal button.today { box-shadow: inset 0 0 0 1.5px var(--text2); }
+.cal button.sel { background: var(--accent); color: var(--accent-ink); }
+.cal button.sel::after { background: var(--accent-ink); }
+.day-ex { padding: 8px 0; border-top: 1px solid var(--line); }
+.day-ex:first-of-type { border-top: 0; }
+.day-ex .s { font-size: 13px; color: var(--text2); font-variant-numeric: tabular-nums; }
+
+/* 設定 */
+h2.sec { font-size: 13px; color: var(--text2); font-weight: 600; margin: 22px 0 8px; }
+h2.sec:first-child { margin-top: 0; }
+.ex-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+.ex-row:first-of-type { border-top: 0; }
+.ex-row select {
+  background: var(--surface2); border: 0; border-radius: 8px; padding: 6px 8px; font-size: 14px; flex: none;
+}
+.part-h { font-weight: 700; margin: 4px 0 2px; }
+.part-h:not(:first-child) { margin-top: 14px; }
+
+#dialog { position: fixed; inset: 0; z-index: 70; display: none; place-items: center; padding: 24px; background: rgba(0, 0, 0, .6); }
+#dialog.open { display: grid; }
+#dialog .box { background: var(--surface); border-radius: 16px; padding: 20px 16px 16px; width: 100%; max-width: 320px; }
+#dialog .msg { white-space: pre-line; margin-bottom: 16px; text-align: center; }
+#dialog .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#dialog .btns.one { grid-template-columns: 1fr; }
+.btn.danger-fill { background: var(--danger); color: #fff; }
+
+#toast {
+  position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(10px);
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;
+  opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 60; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<header><h1 id="title">記録</h1></header>
+<main id="view"></main>
+
+<nav id="tabs">
+  <button data-a="tab" data-tab="record">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>記録
+  </button>
+  <button data-a="tab" data-tab="graph">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M4 16l5-5 4 3 7-8"/></svg>グラフ
+  </button>
+  <button data-a="tab" data-tab="calendar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>カレンダー
+  </button>
+  <button data-a="tab" data-tab="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>設定
+  </button>
+</nav>
+
+<div id="sheet"><div class="backdrop" data-a="closeSheet"></div><div class="panel" id="sheetPanel"></div></div>
+<div id="toast"></div>
+<div id="dialog"><div class="box"><div class="msg" id="dialogMsg"></div><div class="btns" id="dialogBtns"></div></div></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+
+// ---------- データ ----------
+const KEY = 'kintore-v1';
+const PARTS = ['胸', '背中', '肩', '腕', '脚', '腹'];
+const STEPS = [0.5, 1, 1.25, 2, 2.5, 5];
+// [部位, 種目名, 増減幅kg, 自重種目]
+const DEFAULT_EXERCISES = [
+  ['胸', 'ベンチプレス', 2.5], ['胸', 'インクラインベンチプレス', 2.5], ['胸', 'プレスマシン', 2.5],
+  ['胸', 'ダンベルプレス', 1], ['胸', 'ペックフライ', 2.5], ['胸', 'インクラインスミスマシン', 2.5],
+  ['背中', '懸垂', 2.5, true], ['背中', 'ワンハンドダンベルロー', 1], ['背中', 'ラットプルダウン', 2.5], ['背中', 'シーテッドロウ', 2.5],
+  ['肩', 'ショルダープレス', 2.5], ['肩', 'ケーブルサイドレイズ', 1], ['肩', 'サイドレイズ', 1], ['肩', 'リアレイズ', 1],
+  ['肩', 'ダンベルショルダープレス', 1],
+  ['腕', 'バーベルカール', 2.5], ['腕', 'インクラインダンベルカール', 1], ['腕', 'プッシュダウン（EZ）', 2.5],
+  ['腕', 'プッシュダウン（ケーブル）', 2.5], ['腕', 'ライイングエクステンション', 2.5],
+  ['脚', 'スクワット', 2.5], ['脚', 'レッグプレス', 5], ['脚', 'レッグエクステンション', 2.5], ['脚', 'レッグカール', 2.5],
+];
+
+function seed() {
+  return {
+    v: 1,
+    exercises: DEFAULT_EXERCISES.map(([part, name, step, bw], i) => ({ id: 'e' + i, part, name, step, bw: !!bw, hidden: false })),
+    workouts: {}, // { 'YYYY-MM-DD': [{ ex: id, sets: [{ w, r }] }] }
+    lastExport: null,
+  };
+}
+function load() {
+  try {
+    const s = localStorage.getItem(KEY);
+    if (s) return JSON.parse(s);
+  } catch (e) { /* 読めなければ初期データ */ }
+  return seed();
+}
+let db = load();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { notify('保存できませんでした。設定からバックアップを書き出してください。'); }
+}
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+// ---------- ユーティリティ ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const today = () => ymd(new Date());
+const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return ymd(d); };
+const WD = '日月火水木金土';
+const fmtDate = s => { const d = parseDate(s); return `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）`; };
+const fmtShort = s => { const d = parseDate(s); return `${d.getMonth() + 1}/${d.getDate()}`; };
+const num = x => Math.round(x * 100) / 100;
+const exById = id => db.exercises.find(e => e.id === id);
+const entriesOf = date => db.workouts[date] || [];
+const hasWorkout = date => entriesOf(date).some(e => e.sets.length);
+
+function setLabel(ex, s) {
+  if (ex && ex.bw) return (s.w > 0 ? `自重+${num(s.w)}kg` : '自重') + ` × ${s.r}回`;
+  return `${num(s.w)}kg × ${s.r}回`;
+}
+// その日のmaxセット（重量が最大、同じ重量なら回数が多い方。自重種目は回数が最大）
+function topSet(ex, sets) {
+  const key = s => ex && ex.bw ? [s.r, s.w] : [s.w, s.r];
+  return sets.reduce((a, b) => { const ka = key(a), kb = key(b); return kb[0] > ka[0] || (kb[0] === ka[0] && kb[1] > ka[1]) ? b : a; });
+}
+function prevSession(exId, date) {
+  const dates = Object.keys(db.workouts).filter(d => d < date).sort().reverse();
+  for (const d of dates) {
+    const e = db.workouts[d].find(x => x.ex === exId && x.sets.length);
+    if (e) return { date: d, sets: e.sets };
+  }
+  return null;
+}
+function lastDone(exId) {
+  const dates = Object.keys(db.workouts).sort().reverse();
+  return dates.find(d => db.workouts[d].some(x => x.ex === exId && x.sets.length)) || null;
+}
+
+// アプリ内の確認ダイアログ（ブラウザ標準のconfirmは環境によって勝手に閉じるため使わない）
+function ask(msg, ok = '削除する', danger = true) {
+  return new Promise(resolve => {
+    $('#dialogMsg').textContent = msg;
+    const btns = $('#dialogBtns');
+    btns.className = 'btns' + (ok ? '' : ' one');
+    btns.innerHTML = (ok ? `<button class="btn" data-r="0">やめる</button>` : '')
+      + `<button class="btn ${danger ? 'danger-fill' : 'primary'}" data-r="1">${ok || 'OK'}</button>`;
+    $('#dialog').classList.add('open');
+    btns.onclick = ev => {
+      const b = ev.target.closest('[data-r]');
+      if (!b) return;
+      $('#dialog').classList.remove('open');
+      resolve(b.dataset.r === '1');
+    };
+  });
+}
+const notify = msg => ask(msg, null, false);
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ---------- 画面の状態 ----------
+const ui = {
+  tab: 'record',
+  date: today(),
+  draft: {},       // 種目ID → { w, r } 入力中の値
+  editing: null,   // { ex, s } 修正中のセット
+  sheet: null,
+  pickerPart: '胸',
+  newForm: false,
+  graphEx: null,
+  range: 'all',
+  calMonth: today().slice(0, 7),
+  calSel: today(),
+};
+
+function getDraft(exId) {
+  if (!ui.draft[exId]) {
+    const ex = exById(exId);
+    const entry = entriesOf(ui.date).find(e => e.ex === exId);
+    let base;
+    if (entry && entry.sets.length) base = entry.sets[entry.sets.length - 1];
+    else {
+      const prev = prevSession(exId, ui.date);
+      base = prev ? prev.sets[0] : { w: ex && ex.bw ? 0 : 10, r: 10 };
+    }
+    ui.draft[exId] = { w: base.w, r: base.r };
+  }
+  return ui.draft[exId];
+}
+
+// ---------- 描画 ----------
+const TITLES = { record: '記録', graph: 'グラフ', calendar: 'カレンダー', settings: '設定' };
+function render() {
+  $('#title').textContent = TITLES[ui.tab];
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
+  $('#view').innerHTML = VIEWS[ui.tab]();
+  if (ui.tab === 'graph') drawChart();
+}
+
+const VIEWS = {
+  record() {
+    const isToday = ui.date === today();
+    let h = `<div class="datebar">
+      <button class="icon-btn" data-a="day" data-n="-1" aria-label="前の日">‹</button>
+      <div class="d">${fmtDate(ui.date)}<small>${isToday ? '今日' : `<span data-a="goToday" style="cursor:pointer">今日に戻る</span>`}</small></div>
+      <button class="icon-btn" data-a="day" data-n="1" aria-label="次の日">›</button>
+    </div>`;
+    const entries = entriesOf(ui.date);
+    for (const entry of entries) {
+      const ex = exById(entry.ex);
+      if (!ex) continue;
+      const d = getDraft(ex.id);
+      const prev = prevSession(ex.id, ui.date);
+      const editing = ui.editing && ui.editing.ex === ex.id ? ui.editing.s : -1;
+      h += `<section class="card" id="card-${ex.id}">
+        <div class="ex-head">
+          <div class="name"><span class="tag">${esc(ex.part)}</span>${esc(ex.name)}</div>
+          <button class="icon-btn" data-a="rmEntry" data-ex="${ex.id}" aria-label="種目を外す">✕</button>
+        </div>
+        <div class="prev">${prev ? `前回 ${fmtShort(prev.date)}：${setLabel(ex, topSet(ex, prev.sets))}` : '初めての記録'}</div>
+        ${entry.sets.length ? `<ol class="sets">${entry.sets.map((s, i) => `
+          <li class="${i === editing ? 'editing' : ''}" data-a="editSet" data-ex="${ex.id}" data-s="${i}">
+            <span class="no">${i + 1}</span><span class="v">${setLabel(ex, s)}</span>
+            <button class="icon-btn" data-a="rmSet" data-ex="${ex.id}" data-s="${i}" aria-label="セットを削除">✕</button>
+          </li>`).join('')}</ol>` : ''}
+        <div class="steppers">
+          ${stepper(ex, 'w', ex.bw ? '加重 kg' : '重量 kg', d.w)}
+          ${stepper(ex, 'r', '回数', d.r)}
+        </div>
+        ${editing >= 0
+          ? `<div class="edit-actions"><button class="btn" data-a="cancelEdit">やめる</button>
+             <button class="btn primary" data-a="addSet" data-ex="${ex.id}">${editing + 1}セット目を更新</button></div>`
+          : `<button class="btn primary" data-a="addSet" data-ex="${ex.id}">${entry.sets.length + 1}セット目を記録</button>`}
+      </section>`;
+    }
+    if (!entries.length) h += `<div class="empty">まだ種目がありません。<br>下のボタンから追加しましょう。</div>`;
+    h += `<button class="btn ghost" data-a="openPicker">＋ 種目を追加</button>`;
+    return h;
+  },
+
+  graph() {
+    const done = db.exercises.filter(ex => lastDone(ex.id));
+    if (!done.length) return `<div class="empty">記録がたまるとここにグラフが出ます。</div>`;
+    if (!ui.graphEx || !done.some(e => e.id === ui.graphEx)) {
+      ui.graphEx = done.slice().sort((a, b) => lastDone(b.id).localeCompare(lastDone(a.id)))[0].id;
+    }
+    const ex = exById(ui.graphEx);
+    const pts = series(ex);
+    const unit = ex.bw ? '回' : 'kg';
+    const opts = PARTS.map(p => {
+      const list = done.filter(e => e.part === p);
+      return list.length ? `<optgroup label="${p}">${list.map(e => `<option value="${e.id}" ${e.id === ex.id ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>` : '';
+    }).join('');
+    const ranges = [['1m', '1ヶ月'], ['3m', '3ヶ月'], ['1y', '1年'], ['all', '全期間']];
+    let h = `<select class="full" data-c="graphEx" style="margin-bottom:10px;font-weight:700">${opts}</select>
+      <div class="seg">${ranges.map(([k, l]) => `<button class="${ui.range === k ? 'on' : ''}" data-a="range" data-k="${k}">${l}</button>`).join('')}</div>`;
+    if (!pts.length) return h + `<div class="empty">この期間の記録はありません。</div>`;
+    const best = Math.max(...pts.map(p => p.v));
+    const last = pts[pts.length - 1].v;
+    const diff = num(last - pts[0].v);
+    h += `<div class="tiles">
+      <div class="tile"><div class="k">${ex.bw ? '最高回数' : '最高重量'}</div><div class="v">${num(best)}<small>${unit}</small></div></div>
+      <div class="tile"><div class="k">最新</div><div class="v">${num(last)}<small>${unit}</small></div></div>
+      <div class="tile"><div class="k">期間の伸び</div><div class="v">${diff > 0 ? '+' : ''}${diff}<small>${unit}</small></div></div>
+    </div>
+    <div class="card"><div class="small muted" style="margin-bottom:6px">${ex.bw ? 'その日の最高回数' : 'その日の最高重量'}</div>
+      <div class="chart-wrap" id="chart"></div></div>
+    <div class="card"><div class="small muted">履歴</div><ul class="hist">
+      ${pts.slice().reverse().map(p => `<li><span class="dt">${fmtShort(p.date)}</span><span class="best">${num(p.v)}${unit}</span>
+        <span class="grow small muted">${p.sets.map(s => ex.bw ? (s.w > 0 ? `+${num(s.w)}kg×${s.r}` : `${s.r}回`) : `${num(s.w)}×${s.r}`).join('、')}</span></li>`).join('')}
+    </ul></div>`;
+    return h;
+  },
+
+  calendar() {
+    const [y, m] = ui.calMonth.split('-').map(Number);
+    const first = new Date(y, m - 1, 1);
+    const days = new Date(y, m, 0).getDate();
+    let count = 0;
+    let cells = '';
+    for (let i = 0; i < first.getDay(); i++) cells += '<span></span>';
+    for (let d = 1; d <= days; d++) {
+      const ds = `${y}-${pad(m)}-${pad(d)}`;
+      const has = hasWorkout(ds);
+      if (has) count++;
+      cells += `<button class="${has ? 'has' : ''} ${ds === today() ? 'today' : ''} ${ds === ui.calSel ? 'sel' : ''}" data-a="calDay" data-d="${ds}">${d}</button>`;
+    }
+    let h = `<div class="cal-head">
+      <button class="icon-btn" data-a="calMonth" data-n="-1" aria-label="前の月">‹</button>
+      <div class="m">${y}年${m}月</div>
+      <button class="icon-btn" data-a="calMonth" data-n="1" aria-label="次の月">›</button>
+    </div>
+    <div class="card">
+      <div class="cal">${[...WD].map((w, i) => `<span class="wd ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</span>`).join('')}${cells}</div>
+      <div class="small muted" style="text-align:center;margin-top:10px">この月のトレーニング：<b style="color:var(--text)">${count}日</b></div>
+    </div>`;
+    if (ui.calSel) {
+      const entries = entriesOf(ui.calSel).filter(e => e.sets.length);
+      h += `<div class="card"><div style="font-weight:700;margin-bottom:6px">${fmtDate(ui.calSel)}</div>`;
+      if (entries.length) {
+        h += entries.map(e => {
+          const ex = exById(e.ex);
+          return `<div class="day-ex"><div><span class="tag">${esc(ex ? ex.part : '')}</span>${esc(ex ? ex.name : '（削除された種目）')}</div>
+            <div class="s">${e.sets.map(s => setLabel(ex, s)).join('、')}</div></div>`;
+        }).join('');
+        h += `<button class="btn" style="margin-top:10px" data-a="openDay" data-d="${ui.calSel}">この日の記録を開く</button>`;
+      } else {
+        h += `<div class="muted small" style="margin-bottom:10px">記録はありません。</div>
+          <button class="btn" data-a="openDay" data-d="${ui.calSel}">この日に記録する</button>`;
+      }
+      h += `</div>`;
+    }
+    return h;
+  },
+
+  settings() {
+    const visible = db.exercises.filter(e => !e.hidden);
+    const hidden = db.exercises.filter(e => e.hidden);
+    let h = `<h2 class="sec">種目と増減幅</h2><div class="card">`;
+    for (const p of PARTS) {
+      const list = visible.filter(e => e.part === p);
+      h += `<div class="part-h">${p}</div>`;
+      if (!list.length) h += `<div class="small muted" style="padding:6px 0">種目なし</div>`;
+      h += list.map(e => `<div class="ex-row">
+        <div class="grow">${esc(e.name)}${e.bw ? ' <span class="tag">自重</span>' : ''}</div>
+        <select data-c="step" data-ex="${e.id}" aria-label="増減幅">${STEPS.map(s => `<option value="${s}" ${s === e.step ? 'selected' : ''}>±${s}kg</option>`).join('')}</select>
+        <button class="icon-btn" data-a="hideEx" data-ex="${e.id}" aria-label="削除">✕</button>
+      </div>`).join('');
+    }
+    h += `</div><h2 class="sec">種目を追加</h2><div class="card">${newExForm(null)}</div>`;
+    if (hidden.length) {
+      h += `<h2 class="sec">削除した種目（記録は残っています）</h2><div class="card">${hidden.map(e => `<div class="ex-row">
+        <div class="grow"><span class="tag">${e.part}</span>${esc(e.name)}</div>
+        <button class="btn" style="width:auto;padding:6px 14px" data-a="unhideEx" data-ex="${e.id}">戻す</button></div>`).join('')}</div>`;
+    }
+    h += `<h2 class="sec">バックアップ</h2><div class="card">
+      <p class="small muted" style="margin:0 0 10px">記録はこのiPhoneの中だけに保存されています。機種変更や万一に備えて、ときどきファイルに書き出してください。</p>
+      <div class="small" style="margin-bottom:10px">前回の書き出し：${db.lastExport ? fmtDate(db.lastExport) : '<span style="color:var(--danger)">まだありません</span>'}</div>
+      <button class="btn primary" data-a="export" style="margin-bottom:8px">ファイルに書き出す</button>
+      <button class="btn" data-a="import">ファイルから読み込む</button>
+    </div>`;
+    return h;
+  },
+};
+
+function stepper(ex, f, label, val) {
+  return `<div class="stepper"><label>${label}</label><div class="ctl">
+    <button data-a="step" data-ex="${ex.id}" data-f="${f}" data-n="-1" aria-label="減らす">−</button>
+    <input data-ex="${ex.id}" data-f="${f}" inputmode="${f === 'w' ? 'decimal' : 'numeric'}" value="${num(val)}">
+    <button data-a="step" data-ex="${ex.id}" data-f="${f}" data-n="1" aria-label="増やす">＋</button>
+  </div></div>`;
+}
+
+function newExForm(part) {
+  return `<div class="field"><label>種目名</label><input type="text" id="nx-name" placeholder="例：ケーブルクロスオーバー"></div>
+    ${part ? '' : `<div class="field"><label>部位</label><select id="nx-part">${PARTS.map(p => `<option>${p}</option>`).join('')}</select></div>`}
+    <div class="field"><label>±ボタンの増減幅</label><select id="nx-step">${STEPS.map(s => `<option value="${s}" ${s === 2.5 ? 'selected' : ''}>${s}kg</option>`).join('')}</select></div>
+    <label class="check"><input type="checkbox" id="nx-bw">自重種目（グラフは回数で表示）</label>
+    <button class="btn primary" data-a="createEx" ${part ? `data-part="${part}"` : ''}>追加する</button>`;
+}
+
+// ---------- 種目選択シート ----------
+function renderSheet() {
+  const sheet = $('#sheet');
+  if (!ui.sheet) { sheet.classList.remove('open'); return; }
+  const inToday = new Set(entriesOf(ui.date).map(e => e.ex));
+  const list = db.exercises.filter(e => !e.hidden && e.part === ui.pickerPart);
+  $('#sheetPanel').innerHTML = `<div class="grip"></div>
+    <div class="seg">${PARTS.map(p => `<button class="${p === ui.pickerPart ? 'on' : ''}" data-a="pickPart" data-p="${p}">${p}</button>`).join('')}</div>
+    <div class="pick-list">${list.map(e => {
+      const ld = lastDone(e.id);
+      return `<button data-a="pick" data-ex="${e.id}"><span class="grow">${esc(e.name)}<small>${ld ? `前回 ${fmtShort(ld)}` : '未実施'}</small></span>${inToday.has(e.id) ? '<span class="chk">✓</span>' : ''}</button>`;
+    }).join('') || '<div class="small muted" style="padding:8px 0">この部位の種目はまだありません。</div>'}</div>
+    ${ui.newForm
+      ? `<div class="card"><div style="font-weight:700;margin-bottom:8px">「${ui.pickerPart}」に種目を追加</div>${newExForm(ui.pickerPart)}</div>`
+      : `<button class="btn ghost" data-a="newForm">＋ リストにない種目を追加</button>`}`;
+  sheet.classList.add('open');
+}
+
+// ---------- グラフ ----------
+function series(ex) {
+  const cutoff = { '1m': -31, '3m': -92, '1y': -366 }[ui.range];
+  const from = cutoff ? addDays(today(), cutoff) : '';
+  return Object.keys(db.workouts).sort().filter(d => d >= from).map(d => {
+    const e = db.workouts[d].find(x => x.ex === ex.id && x.sets.length);
+    if (!e) return null;
+    const v = Math.max(...e.sets.map(s => ex.bw ? s.r : s.w));
+    return { date: d, v, sets: e.sets };
+  }).filter(Boolean);
+}
+
+function niceTicks(lo, hi, n) {
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const raw = (hi - lo) / n;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const f = raw / mag;
+  const step = (f >= 7.5 ? 10 : f >= 3.5 ? 5 : f >= 1.5 ? 2 : 1) * mag;
+  const ticks = [];
+  for (let v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + 1e-9; v += step) ticks.push(num(v));
+  return ticks;
+}
+
+function drawChart() {
+  const wrap = $('#chart');
+  if (!wrap) return;
+  const ex = exById(ui.graphEx);
+  const pts = series(ex);
+  const unit = ex.bw ? '回' : 'kg';
+  const W = wrap.clientWidth, H = 210, L = 36, R = 14, T = 14, B = 26;
+  const vals = pts.map(p => p.v);
+  const ticks = niceTicks(Math.min(...vals), Math.max(...vals), 4);
+  const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+  const t0 = parseDate(pts[0].date).getTime(), t1 = parseDate(pts[pts.length - 1].date).getTime();
+  const x = p => t1 === t0 ? (L + W - R) / 2 : L + (parseDate(p.date).getTime() - t0) / (t1 - t0) * (W - L - R);
+  const y = v => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
+  const xy = pts.map(p => [x(p), y(p.v)]);
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" height="${H}">`;
+  for (const t of ticks) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/>
+      <text x="${L - 6}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${t}</text>`;
+  }
+  const xl = pts.length > 2 ? [0, Math.floor((pts.length - 1) / 2), pts.length - 1] : pts.length === 2 ? [0, 1] : [0];
+  for (const i of xl) {
+    const anchor = pts.length === 1 ? 'middle' : i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle';
+    s += `<text x="${xy[i][0]}" y="${H - 6}" text-anchor="${anchor}" font-size="11" fill="var(--muted)">${fmtShort(pts[i].date)}</text>`;
+  }
+  s += `<line id="cross" y1="${T}" y2="${H - B}" stroke="var(--text2)" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  if (xy.length > 1) s += `<path d="M${xy.map(p => p.join(',')).join('L')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += xy.map(([cx, cy], i) => `<circle class="dot" data-i="${i}" cx="${cx}" cy="${cy}" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`).join('');
+  const [lx, ly] = xy[xy.length - 1];
+  s += `<text x="${Math.min(lx, W - R)}" y="${ly - 10}" text-anchor="end" font-size="12" font-weight="700" fill="var(--text)">${num(pts[pts.length - 1].v)}${unit}</text>`;
+  s += `<rect id="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/></svg><div class="tip" id="tip"></div>`;
+  wrap.innerHTML = s;
+
+  const svg = wrap.querySelector('svg'), tip = $('#tip'), cross = $('#cross');
+  const show = ev => {
+    const r = svg.getBoundingClientRect();
+    const px = ev.clientX - r.left;
+    let bi = 0;
+    xy.forEach((p, i) => { if (Math.abs(p[0] - px) < Math.abs(xy[bi][0] - px)) bi = i; });
+    const p = pts[bi];
+    cross.setAttribute('x1', xy[bi][0]); cross.setAttribute('x2', xy[bi][0]); cross.setAttribute('visibility', 'visible');
+    svg.querySelectorAll('.dot').forEach(d => d.setAttribute('r', +d.dataset.i === bi ? 6 : 4));
+    tip.innerHTML = `<div class="muted">${fmtDate(p.date)}</div><b>${num(p.v)}${unit}</b>
+      <div class="muted">${p.sets.map(s => setLabel(ex, s)).join('<br>')}</div>`;
+    tip.style.display = 'block';
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(W - tw, xy[bi][0] - tw / 2)) + 'px';
+    tip.style.top = (xy[bi][1] > H / 2 ? 0 : H - tip.offsetHeight - B) + 'px';
+  };
+  svg.addEventListener('pointerdown', show);
+  svg.addEventListener('pointermove', show);
+  svg.addEventListener('pointerleave', ev => {
+    if (ev.pointerType !== 'mouse') return;
+    tip.style.display = 'none'; cross.setAttribute('visibility', 'hidden');
+    svg.querySelectorAll('.dot').forEach(d => d.setAttribute('r', 4));
+  });
+}
+
+// ---------- バックアップ ----------
+async function exportData() {
+  const name = `kintore-${today()}.json`;
+  const file = new File([JSON.stringify(db)], name, { type: 'application/json' });
+  const done = () => { db.lastExport = today(); save(); render(); toast('書き出しました'); };
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: name }); done(); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file);
+  a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  done();
+}
+$('#importFile').addEventListener('change', async ev => {
+  const f = ev.target.files[0];
+  ev.target.value = '';
+  if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.exercises) || typeof d.workouts !== 'object') throw new Error();
+    if (!await ask('今の記録をこのファイルの内容で置き換えます。よろしいですか？', '置き換える')) return;
+    db = d; save(); ui.draft = {}; ui.editing = null; render(); toast('読み込みました');
+  } catch (e) { notify('このファイルは読み込めませんでした。'); }
+});
+
+// ---------- 操作 ----------
+function addEntry(exId) {
+  const list = db.workouts[ui.date] || (db.workouts[ui.date] = []);
+  if (!list.some(e => e.ex === exId)) { list.push({ ex: exId, sets: [] }); save(); }
+  ui.sheet = null; ui.newForm = false;
+  renderSheet(); render();
+  const card = document.getElementById('card-' + exId);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+const ACTIONS = {
+  tab: t => { ui.tab = t.dataset.tab; render(); window.scrollTo(0, 0); },
+  day: t => { ui.date = addDays(ui.date, +t.dataset.n); ui.draft = {}; ui.editing = null; render(); },
+  goToday: () => { ui.date = today(); ui.draft = {}; ui.editing = null; render(); },
+  step: t => {
+    const ex = exById(t.dataset.ex), f = t.dataset.f, d = getDraft(ex.id);
+    d[f] = Math.max(0, num(d[f] + (+t.dataset.n) * (f === 'w' ? ex.step : 1)));
+    document.querySelector(`input[data-ex="${ex.id}"][data-f="${f}"]`).value = num(d[f]);
+  },
+  addSet: t => {
+    const exId = t.dataset.ex, d = getDraft(exId);
+    if (!(d.r > 0)) { toast('回数を入れてください'); return; }
+    const entry = entriesOf(ui.date).find(e => e.ex === exId);
+    if (ui.editing && ui.editing.ex === exId) {
+      entry.sets[ui.editing.s] = { w: d.w, r: d.r };
+      ui.editing = null;
+      toast('更新しました');
+    } else {
+      entry.sets.push({ w: d.w, r: d.r });
+    }
+    save(); render();
+  },
+  editSet: t => {
+    const exId = t.dataset.ex, s = +t.dataset.s;
+    const set = entriesOf(ui.date).find(e => e.ex === exId).sets[s];
+    ui.editing = { ex: exId, s };
+    ui.draft[exId] = { w: set.w, r: set.r };
+    render();
+  },
+  cancelEdit: () => { const ex = ui.editing.ex; ui.editing = null; delete ui.draft[ex]; render(); },
+  rmSet: async t => {
+    if (!await ask('このセットを削除しますか？')) return;
+    const entry = entriesOf(ui.date).find(e => e.ex === t.dataset.ex);
+    entry.sets.splice(+t.dataset.s, 1);
+    ui.editing = null;
+    save(); render();
+  },
+  rmEntry: async t => {
+    const list = entriesOf(ui.date);
+    const i = list.findIndex(e => e.ex === t.dataset.ex);
+    if (list[i].sets.length && !await ask('この種目と記録したセットを削除しますか？')) return;
+    list.splice(i, 1);
+    if (!list.length) delete db.workouts[ui.date];
+    delete ui.draft[t.dataset.ex]; ui.editing = null;
+    save(); render();
+  },
+  openPicker: () => { ui.sheet = 'picker'; ui.newForm = false; renderSheet(); },
+  closeSheet: () => { ui.sheet = null; renderSheet(); },
+  pickPart: t => { ui.pickerPart = t.dataset.p; ui.newForm = false; renderSheet(); },
+  pick: t => addEntry(t.dataset.ex),
+  newForm: () => { ui.newForm = true; renderSheet(); $('#nx-name').focus(); },
+  createEx: t => {
+    const name = $('#nx-name').value.trim();
+    const part = t.dataset.part || $('#nx-part').value;
+    if (!name) { toast('種目名を入れてください'); return; }
+    if (db.exercises.some(e => !e.hidden && e.part === part && e.name === name)) { toast('同じ名前の種目があります'); return; }
+    const ex = { id: 'u' + Date.now(), part, name, step: +$('#nx-step').value, bw: $('#nx-bw').checked, hidden: false };
+    db.exercises.push(ex);
+    save();
+    if (t.dataset.part) addEntry(ex.id);
+    else { render(); toast(`「${name}」を追加しました`); }
+  },
+  range: t => { ui.range = t.dataset.k; render(); },
+  calMonth: t => {
+    const [y, m] = ui.calMonth.split('-').map(Number);
+    const d = new Date(y, m - 1 + (+t.dataset.n), 1);
+    ui.calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+    render();
+  },
+  calDay: t => { ui.calSel = t.dataset.d; render(); },
+  openDay: t => { ui.date = t.dataset.d; ui.draft = {}; ui.editing = null; ui.tab = 'record'; render(); window.scrollTo(0, 0); },
+  hideEx: async t => {
+    const ex = exById(t.dataset.ex);
+    if (!await ask(`「${ex.name}」をリストから削除しますか？\n（これまでの記録は残ります）`)) return;
+    ex.hidden = true; save(); render();
+  },
+  unhideEx: t => { exById(t.dataset.ex).hidden = false; save(); render(); },
+  export: () => exportData(),
+  import: () => $('#importFile').click(),
+};
+
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-a]');
+  if (t && ACTIONS[t.dataset.a]) ACTIONS[t.dataset.a](t);
+});
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if (t.matches('input[data-f]')) {
+    const v = parseFloat(t.value.replace(',', '.'));
+    getDraft(t.dataset.ex)[t.dataset.f] = isNaN(v) ? 0 : Math.max(0, v);
+  }
+});
+document.addEventListener('focusin', ev => { if (ev.target.matches('input[data-f]')) ev.target.select(); });
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.dataset.c === 'graphEx') { ui.graphEx = t.value; render(); }
+  if (t.dataset.c === 'step') { exById(t.dataset.ex).step = +t.value; save(); toast('増減幅を変更しました'); }
+});
+let lastW = innerWidth;
+addEventListener('resize', () => { if (innerWidth !== lastW) { lastW = innerWidth; if (ui.tab === 'graph') drawChart(); } });
+
+render();
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
