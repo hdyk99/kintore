@@ -202,6 +202,13 @@ h2.sec:first-child { margin-top: 0; }
 .part-h { font-weight: 700; margin: 4px 0 2px; }
 .part-h:not(:first-child) { margin-top: 14px; }
 
+.notice { border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; font-size: 14px; }
+.notice.warn { background: rgba(255, 100, 100, .12); border: 1px solid rgba(255, 100, 100, .45); }
+.notice.info { background: var(--accent-soft); border: 1px solid rgba(163, 230, 53, .4); }
+.notice b { display: block; margin-bottom: 4px; }
+.notice ol { margin: 6px 0 0; padding-left: 20px; }
+.notice .btn { margin-top: 10px; padding: 10px; }
+
 #dialog { position: fixed; inset: 0; z-index: 70; display: none; place-items: center; padding: 24px; background: rgba(0, 0, 0, .6); }
 #dialog.open { display: grid; }
 #dialog .box { background: var(--surface); border-radius: 16px; padding: 20px 16px 16px; width: 100%; max-width: 320px; }
@@ -340,6 +347,28 @@ function ask(msg, ok = '削除する', danger = true) {
 }
 const notify = msg => ask(msg, null, false);
 
+// ホーム画面のアイコンから開いているか（Safariのタブで開くと7日間使わないと記録が消される）
+const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const daysSince = d => Math.floor((parseDate(today()) - parseDate(d)) / 86400000);
+
+function notices() {
+  let h = '';
+  if (!isStandalone()) {
+    h += `<div class="notice warn"><b>⚠ Safariで開いています</b>
+      このまま使うと、7日間開かなかったときに記録がすべて消えます。ホーム画面に追加して、アイコンから開いてください。
+      <ol><li>下の共有ボタン（□に↑）を押す</li><li>「ホーム画面に追加」を選ぶ</li><li>以後はホーム画面のアイコンから開く</li></ol></div>`;
+  }
+  const hasData = Object.keys(db.workouts).length > 0;
+  const days = db.lastExport ? daysSince(db.lastExport) : null;
+  if (hasData && (days === null || days >= 7)) {
+    h += `<div class="notice info"><b>バックアップしましょう</b>
+      ${days === null ? 'まだ一度もバックアップしていません。' : `前回のバックアップから${days}日経っています。`}
+      ファイルに書き出しておくと、万一記録が消えても戻せます。
+      <button class="btn primary" data-a="export">今すぐ書き出す</button></div>`;
+  }
+  return h;
+}
+
 let toastTimer;
 function toast(msg) {
   const t = $('#toast');
@@ -391,7 +420,7 @@ function render() {
 const VIEWS = {
   record() {
     const isToday = ui.date === today();
-    let h = `<div class="datebar">
+    let h = notices() + `<div class="datebar">
       <button class="icon-btn" data-a="day" data-n="-1" aria-label="前の日">‹</button>
       <div class="d">${fmtDate(ui.date)}<small>${isToday ? '今日' : `<span data-a="goToday" style="cursor:pointer">今日に戻る</span>`}</small></div>
       <button class="icon-btn" data-a="day" data-n="1" aria-label="次の日">›</button>

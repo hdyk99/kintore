@@ -1,5 +1,5 @@
 // オフライン用：アプリの中身を端末に保存しておき、ネットがなくても開けるようにする
-const CACHE = 'kintore-v2';
+const CACHE = 'kintore-v3';
 const FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
