@@ -25,6 +25,8 @@
   --accent-soft: rgba(163, 230, 53, .14);
   --danger: #ff6464;
   --radius: 14px;
+  /* 下のバーの下余白：ホームバー分の余白を詰めて、iPhoneアプリと同じ高さに置く */
+  --nav-safe: max(calc(env(safe-area-inset-bottom) - 14px), 6px);
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -32,7 +34,7 @@ html, body { margin: 0; background: var(--bg); color: var(--text); }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
   font-size: 16px; line-height: 1.5;
-  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  padding-bottom: calc(68px + var(--nav-safe));
   -webkit-text-size-adjust: 100%;
 }
 button, input, select { font: inherit; color: inherit; }
@@ -52,10 +54,10 @@ nav#tabs {
   display: grid; grid-template-columns: repeat(4, 1fr);
   background: rgba(20, 22, 28, .96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--nav-safe);
 }
 nav#tabs button {
-  background: none; border: 0; padding: 8px 0 10px; color: var(--muted);
+  background: none; border: 0; padding: 7px 0 4px; color: var(--muted);
   display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px;
 }
 nav#tabs button svg { width: 24px; height: 24px; }
@@ -218,7 +220,7 @@ h2.sec:first-child { margin-top: 0; }
 .btn.danger-fill { background: var(--danger); color: #fff; }
 
 #toast {
-  position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(10px);
+  position: fixed; left: 50%; bottom: calc(80px + var(--nav-safe)); transform: translateX(-50%) translateY(10px);
   background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;
   opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 60; white-space: nowrap;
 }
